@@ -1,9 +1,7 @@
 "use strict";
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -17,24 +15,14 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/controllers/person/create.ts
-var create_exports = {};
-__export(create_exports, {
-  create: () => create
-});
-module.exports = __toCommonJS(create_exports);
-
 // src/lib/pg/db.ts
+var db_exports = {};
+__export(db_exports, {
+  database: () => database
+});
+module.exports = __toCommonJS(db_exports);
 var import_pg = require("pg");
 
 // src/env/index.ts
@@ -84,64 +72,7 @@ var Database = class {
   }
 };
 var database = new Database();
-
-// src/repositories/person.repository.ts
-var PersonRepository = class {
-  async create({
-    cpf,
-    name,
-    birth,
-    email,
-    user_id
-  }) {
-    const result = await database.clientInstance?.query(
-      `INSERT INTO "person" (cpf, name, birth, email, user_id) VALUES($1, $2, $3, $4, $5) RETURNING *`,
-      [cpf, name, birth, email, user_id]
-    );
-    return result?.rows[0];
-  }
-};
-
-// src/use-cases/create-person.ts
-var CreatePersonUseCase = class {
-  constructor(personRepository) {
-    this.personRepository = personRepository;
-  }
-  async handler(person) {
-    return this.personRepository.create(person);
-  }
-};
-
-// src/controllers/person/create.ts
-var import_zod2 = __toESM(require("zod"));
-async function create(req, reply) {
-  const registerBodySchema = import_zod2.default.object({
-    cpf: import_zod2.default.string(),
-    name: import_zod2.default.string(),
-    birth: import_zod2.default.coerce.date(),
-    email: import_zod2.default.string().email(),
-    user_id: import_zod2.default.number()
-  });
-  const { cpf, name, birth, email, user_id } = registerBodySchema.parse(
-    req.body
-  );
-  try {
-    const personRepository = new PersonRepository();
-    const createPersonUseCase = new CreatePersonUseCase(personRepository);
-    const result = await createPersonUseCase.handler({
-      cpf,
-      name,
-      birth,
-      email,
-      user_id
-    });
-    return reply.status(201).send(result);
-  } catch (error) {
-    console.error(error);
-    throw new Error("Internal Error");
-  }
-}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  create
+  database
 });

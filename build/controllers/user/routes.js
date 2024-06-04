@@ -1,9 +1,7 @@
 "use strict";
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -17,23 +15,14 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/app.ts
-var app_exports = {};
-__export(app_exports, {
-  app: () => app
+// src/controllers/user/routes.ts
+var routes_exports = {};
+__export(routes_exports, {
+  userRoutes: () => userRoutes
 });
-module.exports = __toCommonJS(app_exports);
-var import_fastify = __toESM(require("fastify"));
+module.exports = __toCommonJS(routes_exports);
 
 // src/lib/pg/db.ts
 var import_pg = require("pg");
@@ -86,68 +75,6 @@ var Database = class {
 };
 var database = new Database();
 
-// src/repositories/person.repository.ts
-var PersonRepository = class {
-  async create({
-    cpf,
-    name,
-    birth,
-    email,
-    user_id
-  }) {
-    const result = await database.clientInstance?.query(
-      `INSERT INTO "person" (cpf, name, birth, email, user_id) VALUES($1, $2, $3, $4, $5) RETURNING *`,
-      [cpf, name, birth, email, user_id]
-    );
-    return result?.rows[0];
-  }
-};
-
-// src/use-cases/create-person.ts
-var CreatePersonUseCase = class {
-  constructor(personRepository) {
-    this.personRepository = personRepository;
-  }
-  async handler(person) {
-    return this.personRepository.create(person);
-  }
-};
-
-// src/controllers/person/create.ts
-var import_zod2 = __toESM(require("zod"));
-async function create(req, reply) {
-  const registerBodySchema = import_zod2.default.object({
-    cpf: import_zod2.default.string(),
-    name: import_zod2.default.string(),
-    birth: import_zod2.default.coerce.date(),
-    email: import_zod2.default.string().email(),
-    user_id: import_zod2.default.number()
-  });
-  const { cpf, name, birth, email, user_id } = registerBodySchema.parse(
-    req.body
-  );
-  try {
-    const personRepository = new PersonRepository();
-    const createPersonUseCase = new CreatePersonUseCase(personRepository);
-    const result = await createPersonUseCase.handler({
-      cpf,
-      name,
-      birth,
-      email,
-      user_id
-    });
-    return reply.status(201).send(result);
-  } catch (error) {
-    console.error(error);
-    throw new Error("Internal Error");
-  }
-}
-
-// src/controllers/person/routes.ts
-async function personRoutes(app2) {
-  app2.post("/person", create);
-}
-
 // src/repositories/user.repository.ts
 var UserRepository = class {
   async create({ username, password }) {
@@ -170,11 +97,11 @@ var CreateUserUseCase = class {
 };
 
 // src/controllers/user/create.ts
-var import_zod3 = require("zod");
-async function create2(req, reply) {
-  const registerBodySchema = import_zod3.z.object({
-    username: import_zod3.z.string(),
-    password: import_zod3.z.string()
+var import_zod2 = require("zod");
+async function create(req, reply) {
+  const registerBodySchema = import_zod2.z.object({
+    username: import_zod2.z.string(),
+    password: import_zod2.z.string()
   });
   const { username, password } = registerBodySchema.parse(req.body);
   try {
@@ -189,18 +116,10 @@ async function create2(req, reply) {
 }
 
 // src/controllers/user/routes.ts
-async function userRoutes(app2) {
-  app2.post("/user", create2);
+async function userRoutes(app) {
+  app.post("/user", create);
 }
-
-// src/app.ts
-var app = (0, import_fastify.default)({
-  logger: true,
-  disableRequestLogging: false
-});
-app.register(personRoutes);
-app.register(userRoutes);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  app
+  userRoutes
 });

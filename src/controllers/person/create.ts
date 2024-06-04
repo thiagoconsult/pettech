@@ -9,9 +9,12 @@ export async function create(req: FastifyRequest, reply: FastifyReply) {
     name: z.string(),
     birth: z.coerce.date(),
     email: z.string().email(),
+    user_id: z.number(),
   });
 
-  const { cpf, name, birth, email } = registerBodySchema.parse(req.body);
+  const { cpf, name, birth, email, user_id } = registerBodySchema.parse(
+    req.body
+  );
 
   try {
     const personRepository = new PersonRepository();
@@ -22,6 +25,7 @@ export async function create(req: FastifyRequest, reply: FastifyReply) {
       name,
       birth,
       email,
+      user_id,
     });
 
     return reply.status(201).send(result);

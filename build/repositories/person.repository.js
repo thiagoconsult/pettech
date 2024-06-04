@@ -23,12 +23,72 @@ __export(person_repository_exports, {
   PersonRepository: () => PersonRepository
 });
 module.exports = __toCommonJS(person_repository_exports);
+
+// src/lib/pg/db.ts
+var import_pg = require("pg");
+
+// src/env/index.ts
+var import_config = require("dotenv/config");
+var import_zod = require("zod");
+var envSchema = import_zod.z.object({
+  NODE_ENV: import_zod.z.enum(["development", "production", "test"]).default("development"),
+  PORT: import_zod.z.coerce.number().default(3e3),
+  DATABASE_HOST: import_zod.z.string(),
+  DATABASE_USER: import_zod.z.string(),
+  DATABASE_PASSWORD: import_zod.z.string(),
+  DATABASE_NAME: import_zod.z.string(),
+  DATABASE_PORT: import_zod.z.coerce.number()
+});
+var _env = envSchema.safeParse(process.env);
+if (!_env.success) {
+  console.error("Invalid environment variables", _env.error.format());
+  throw new Error("Invalid environment variables");
+}
+var env = _env.data;
+
+// src/lib/pg/db.ts
+var CONFIG = {
+  host: env.DATABASE_HOST,
+  user: env.DATABASE_USER,
+  password: env.DATABASE_PASSWORD,
+  database: env.DATABASE_NAME,
+  port: env.DATABASE_PORT
+};
+var Database = class {
+  pool;
+  client;
+  constructor() {
+    this.pool = new import_pg.Pool(CONFIG);
+    this.connection();
+  }
+  async connection() {
+    try {
+      this.client = await this.pool.connect();
+    } catch (error) {
+      console.error(`Connection database error ${error}`);
+      throw new Error(`Connection database error ${error}`);
+    }
+  }
+  get clientInstance() {
+    return this.client;
+  }
+};
+var database = new Database();
+
+// src/repositories/person.repository.ts
 var PersonRepository = class {
-  persons = [];
-  async create(person) {
-    person.id = 1;
-    this.persons.push(person);
-    return person;
+  async create({
+    cpf,
+    name,
+    birth,
+    email,
+    user_id
+  }) {
+    const result = await database.clientInstance?.query(
+      `INSERT INTO "person" (cpf, name, birth, email, user_id) VALUES($1, $2, $3, $4, $5) RETURNING *`,
+      [cpf, name, birth, email, user_id]
+    );
+    return result?.rows[0];
   }
 };
 // Annotate the CommonJS export names for ESM import in node:

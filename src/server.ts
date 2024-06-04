@@ -7,5 +7,6 @@ app
     port: env.PORT,
   })
   .then(() => {
-    console.log(`Server started at port #${env.PORT}`);
+    // console.log(`Server started at port #${env.PORT}`);
+    // app.log.info(`Server started at port #${env.PORT}`);
   });
