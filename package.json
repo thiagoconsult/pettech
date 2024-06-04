@@ -3,20 +3,25 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start:dev": "tsx watch src/server.ts"
+    "start:dev": "tsx watch src/server.ts",
+    "build": "tsup src --out-dir build",
+    "start": "node build/server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/morgan": "1.9.9",
     "@types/node": "20.14.0",
     "tsup": "8.1.0",
-    "tsx": "4.11.2"
+    "tsx": "4.11.2",
+    "typescript": "5.4.5"
   },
   "dependencies": {
     "dotenv": "16.4.5",
     "fastify": "4.27.0",
+    "morgan": "1.10.0",
     "zod": "3.23.8"
   }
 }
