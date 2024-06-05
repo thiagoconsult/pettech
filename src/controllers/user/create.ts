@@ -1,6 +1,4 @@
-import { User } from "@/entities/user.entity";
-import { UserRepository } from "@/repositories/user.repository";
-import { CreateUserUseCase } from "@/use-cases/create-user";
+import { MakeCreateUserUseCase } from "@/use-cases/factory/make-create-user-use-case";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 
@@ -12,13 +10,7 @@ export async function create(req: FastifyRequest, reply: FastifyReply) {
 
   const { username, password } = registerBodySchema.parse(req.body);
 
-  try {
-    const userRepository = new UserRepository();
-    const createUserUseCase = new CreateUserUseCase(userRepository);
-    const result = await createUserUseCase.handler({ username, password });
-    return reply.status(201).send(result);
-  } catch (error) {
-    console.error(`Error creating user: ${error}`);
-    throw new Error(`Error creating user: ${error}`);
-  }
+  const createUserUseCase = MakeCreateUserUseCase();
+  const result = await createUserUseCase.handler({ username, password });
+  return reply.status(201).send(result);
 }

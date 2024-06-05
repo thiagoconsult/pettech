@@ -1,9 +1,12 @@
-import { PersonRepository } from "@/repositories/person.repository";
-import { CreatePersonUseCase } from "@/use-cases/create-person";
+import { Person } from "@/entities/person.entity";
+import { MakeCreatePersonUseCase } from "@/use-cases/factory/make-create-person-use-case";
 import { FastifyReply, FastifyRequest } from "fastify";
 import z from "zod";
 
-export async function create(req: FastifyRequest, reply: FastifyReply) {
+export async function create(
+  req: FastifyRequest,
+  reply: FastifyReply
+): Promise<Person> {
   const registerBodySchema = z.object({
     cpf: z.string(),
     name: z.string(),
@@ -16,21 +19,15 @@ export async function create(req: FastifyRequest, reply: FastifyReply) {
     req.body
   );
 
-  try {
-    const personRepository = new PersonRepository();
-    const createPersonUseCase = new CreatePersonUseCase(personRepository);
+  const createPersonUseCase = MakeCreatePersonUseCase();
 
-    const result = await createPersonUseCase.handler({
-      cpf,
-      name,
-      birth,
-      email,
-      user_id,
-    });
+  const result = await createPersonUseCase.handler({
+    cpf,
+    name,
+    birth,
+    email,
+    user_id,
+  });
 
-    return reply.status(201).send(result);
-  } catch (error) {
-    console.error(error);
-    throw new Error("Internal Error");
-  }
+  return reply.status(201).send(result);
 }
