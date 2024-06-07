@@ -85,7 +85,7 @@ var Database = class {
 };
 var database = new Database();
 
-// src/repositories/person.repository.ts
+// src/repositories/pg/person.repository.ts
 var PersonRepository = class {
   async create({
     cpf,
@@ -112,6 +112,13 @@ var CreatePersonUseCase = class {
   }
 };
 
+// src/use-cases/factory/make-create-person-use-case.ts
+function MakeCreatePersonUseCase() {
+  const personRepository = new PersonRepository();
+  const createPersonUseCase = new CreatePersonUseCase(personRepository);
+  return createPersonUseCase;
+}
+
 // src/controllers/person/create.ts
 var import_zod2 = __toESM(require("zod"));
 async function create(req, reply) {
@@ -125,21 +132,15 @@ async function create(req, reply) {
   const { cpf, name, birth, email, user_id } = registerBodySchema.parse(
     req.body
   );
-  try {
-    const personRepository = new PersonRepository();
-    const createPersonUseCase = new CreatePersonUseCase(personRepository);
-    const result = await createPersonUseCase.handler({
-      cpf,
-      name,
-      birth,
-      email,
-      user_id
-    });
-    return reply.status(201).send(result);
-  } catch (error) {
-    console.error(error);
-    throw new Error("Internal Error");
-  }
+  const createPersonUseCase = MakeCreatePersonUseCase();
+  const result = await createPersonUseCase.handler({
+    cpf,
+    name,
+    birth,
+    email,
+    user_id
+  });
+  return reply.status(201).send(result);
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

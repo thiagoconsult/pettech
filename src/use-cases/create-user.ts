@@ -1,9 +1,8 @@
 import { User } from "@/entities/user.entity";
-import { UserRepository } from "@/repositories/user.repository";
-import { ResourseNotFoundError } from "./errors/resource-not-found-error";
+import { IUserRepository } from "@/repositories/user.repository.interface";
 
 export class CreateUserUseCase {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(private readonly userRepository: IUserRepository) {}
 
   async handler(user: User): Promise<User | undefined> {
     const result = await this.userRepository.create(user);

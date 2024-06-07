@@ -86,7 +86,7 @@ var Database = class {
 };
 var database = new Database();
 
-// src/repositories/person.repository.ts
+// src/repositories/pg/person.repository.ts
 var PersonRepository = class {
   async create({
     cpf,
@@ -113,6 +113,13 @@ var CreatePersonUseCase = class {
   }
 };
 
+// src/use-cases/factory/make-create-person-use-case.ts
+function MakeCreatePersonUseCase() {
+  const personRepository = new PersonRepository();
+  const createPersonUseCase = new CreatePersonUseCase(personRepository);
+  return createPersonUseCase;
+}
+
 // src/controllers/person/create.ts
 var import_zod2 = __toESM(require("zod"));
 async function create(req, reply) {
@@ -126,21 +133,15 @@ async function create(req, reply) {
   const { cpf, name, birth, email, user_id } = registerBodySchema.parse(
     req.body
   );
-  try {
-    const personRepository = new PersonRepository();
-    const createPersonUseCase = new CreatePersonUseCase(personRepository);
-    const result = await createPersonUseCase.handler({
-      cpf,
-      name,
-      birth,
-      email,
-      user_id
-    });
-    return reply.status(201).send(result);
-  } catch (error) {
-    console.error(error);
-    throw new Error("Internal Error");
-  }
+  const createPersonUseCase = MakeCreatePersonUseCase();
+  const result = await createPersonUseCase.handler({
+    cpf,
+    name,
+    birth,
+    email,
+    user_id
+  });
+  return reply.status(201).send(result);
 }
 
 // src/controllers/person/routes.ts
@@ -148,12 +149,21 @@ async function personRoutes(app2) {
   app2.post("/person", create);
 }
 
-// src/repositories/user.repository.ts
+// src/repositories/pg/user.repository.ts
 var UserRepository = class {
   async create({ username, password }) {
     const result = await database.clientInstance?.query(
       `INSERT INTO "user" (username, password) VALUES ($1, $2) RETURNING *`,
       [username, password]
+    );
+    return result?.rows[0];
+  }
+  async findWithPerson(userid) {
+    const result = await database.clientInstance?.query(
+      `SELECT * FROM "user"
+      LEFT JOIN person ON "user".id = person.user_id
+      WHERE "user".id = $1`,
+      [userid]
     );
     return result?.rows[0];
   }
@@ -165,9 +175,17 @@ var CreateUserUseCase = class {
     this.userRepository = userRepository;
   }
   async handler(user) {
-    return await this.userRepository.create(user);
+    const result = await this.userRepository.create(user);
+    return result;
   }
 };
+
+// src/use-cases/factory/make-create-user-use-case.ts
+function MakeCreateUserUseCase() {
+  const userRepository = new UserRepository();
+  const createUserUseCase = new CreateUserUseCase(userRepository);
+  return createUserUseCase;
+}
 
 // src/controllers/user/create.ts
 var import_zod3 = require("zod");
@@ -177,29 +195,82 @@ async function create2(req, reply) {
     password: import_zod3.z.string()
   });
   const { username, password } = registerBodySchema.parse(req.body);
-  try {
-    const userRepository = new UserRepository();
-    const createUserUseCase = new CreateUserUseCase(userRepository);
-    const result = await createUserUseCase.handler({ username, password });
-    return reply.status(201).send(result);
-  } catch (error) {
-    console.error(`Error creating user: ${error}`);
-    throw new Error(`Error creating user: ${error}`);
+  const createUserUseCase = MakeCreateUserUseCase();
+  const result = await createUserUseCase.handler({ username, password });
+  return reply.status(201).send(result);
+}
+
+// src/use-cases/errors/resource-not-found-error.ts
+var ResourseNotFoundError = class extends Error {
+  constructor() {
+    super("404 - Resource Not Found");
   }
+};
+
+// src/use-cases/find-with-person.ts
+var FindWithPersonUseCase = class {
+  constructor(userRepository) {
+    this.userRepository = userRepository;
+  }
+  async handler(userid) {
+    const user = await this.userRepository.findWithPerson(userid);
+    if (!user) throw new ResourseNotFoundError();
+    return user;
+  }
+};
+
+// src/use-cases/factory/make-find-with-person.ts
+function MakeFindWithPerson() {
+  const userRepository = new UserRepository();
+  const findWithPersonUseCase = new FindWithPersonUseCase(userRepository);
+  return findWithPersonUseCase;
+}
+
+// src/controllers/user/find-user.ts
+var import_zod4 = require("zod");
+async function findUSer(req, reply) {
+  const registerParamsSchema = import_zod4.z.object({
+    id: import_zod4.z.coerce.number()
+  });
+  const { id } = registerParamsSchema.parse(req.params);
+  const findWithPersonUseCase = MakeFindWithPerson();
+  const result = await findWithPersonUseCase.handler(id);
+  return reply.send(result);
 }
 
 // src/controllers/user/routes.ts
 async function userRoutes(app2) {
+  app2.get("/user/:id", findUSer);
   app2.post("/user", create2);
 }
 
+// src/utils/global-error-handler.ts
+var import_zod5 = require("zod");
+var errorHandlerMap = {
+  ZodError: (error, _, reply) => {
+    reply.status(400).send({
+      mesage: "Validation error",
+      ...error instanceof import_zod5.ZodError && { error: error.format() }
+    });
+  },
+  ResourseNotFoundError: (error, _, reply) => {
+    reply.status(404).send({ mesage: error.message });
+  }
+};
+function globalErrorHandler(error, _, reply) {
+  const handler = errorHandlerMap[error.constructor.name];
+  if (handler) return handler(error, _, reply);
+  if (env.NODE_ENV === "development") {
+    console.error(error);
+  }
+  return reply.status(500).send({ mesage: "Internal server error" });
+}
+
 // src/app.ts
-var app = (0, import_fastify.default)({
-  logger: true,
-  disableRequestLogging: false
-});
+var app = (0, import_fastify.default)();
 app.register(personRoutes);
 app.register(userRoutes);
+app.setErrorHandler(globalErrorHandler);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   app

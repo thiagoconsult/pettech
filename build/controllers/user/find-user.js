@@ -1,9 +1,7 @@
 "use strict";
-var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
@@ -17,22 +15,14 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/controllers/person/routes.ts
-var routes_exports = {};
-__export(routes_exports, {
-  personRoutes: () => personRoutes
+// src/controllers/user/find-user.ts
+var find_user_exports = {};
+__export(find_user_exports, {
+  findUSer: () => findUSer
 });
-module.exports = __toCommonJS(routes_exports);
+module.exports = __toCommonJS(find_user_exports);
 
 // src/lib/pg/db.ts
 var import_pg = require("pg");
@@ -85,69 +75,64 @@ var Database = class {
 };
 var database = new Database();
 
-// src/repositories/pg/person.repository.ts
-var PersonRepository = class {
-  async create({
-    cpf,
-    name,
-    birth,
-    email,
-    user_id
-  }) {
+// src/repositories/pg/user.repository.ts
+var UserRepository = class {
+  async create({ username, password }) {
     const result = await database.clientInstance?.query(
-      `INSERT INTO "person" (cpf, name, birth, email, user_id) VALUES($1, $2, $3, $4, $5) RETURNING *`,
-      [cpf, name, birth, email, user_id]
+      `INSERT INTO "user" (username, password) VALUES ($1, $2) RETURNING *`,
+      [username, password]
+    );
+    return result?.rows[0];
+  }
+  async findWithPerson(userid) {
+    const result = await database.clientInstance?.query(
+      `SELECT * FROM "user"
+      LEFT JOIN person ON "user".id = person.user_id
+      WHERE "user".id = $1`,
+      [userid]
     );
     return result?.rows[0];
   }
 };
 
-// src/use-cases/create-person.ts
-var CreatePersonUseCase = class {
-  constructor(personRepository) {
-    this.personRepository = personRepository;
-  }
-  async handler(person) {
-    return this.personRepository.create(person);
+// src/use-cases/errors/resource-not-found-error.ts
+var ResourseNotFoundError = class extends Error {
+  constructor() {
+    super("404 - Resource Not Found");
   }
 };
 
-// src/use-cases/factory/make-create-person-use-case.ts
-function MakeCreatePersonUseCase() {
-  const personRepository = new PersonRepository();
-  const createPersonUseCase = new CreatePersonUseCase(personRepository);
-  return createPersonUseCase;
+// src/use-cases/find-with-person.ts
+var FindWithPersonUseCase = class {
+  constructor(userRepository) {
+    this.userRepository = userRepository;
+  }
+  async handler(userid) {
+    const user = await this.userRepository.findWithPerson(userid);
+    if (!user) throw new ResourseNotFoundError();
+    return user;
+  }
+};
+
+// src/use-cases/factory/make-find-with-person.ts
+function MakeFindWithPerson() {
+  const userRepository = new UserRepository();
+  const findWithPersonUseCase = new FindWithPersonUseCase(userRepository);
+  return findWithPersonUseCase;
 }
 
-// src/controllers/person/create.ts
-var import_zod2 = __toESM(require("zod"));
-async function create(req, reply) {
-  const registerBodySchema = import_zod2.default.object({
-    cpf: import_zod2.default.string(),
-    name: import_zod2.default.string(),
-    birth: import_zod2.default.coerce.date(),
-    email: import_zod2.default.string().email(),
-    user_id: import_zod2.default.number()
+// src/controllers/user/find-user.ts
+var import_zod2 = require("zod");
+async function findUSer(req, reply) {
+  const registerParamsSchema = import_zod2.z.object({
+    id: import_zod2.z.coerce.number()
   });
-  const { cpf, name, birth, email, user_id } = registerBodySchema.parse(
-    req.body
-  );
-  const createPersonUseCase = MakeCreatePersonUseCase();
-  const result = await createPersonUseCase.handler({
-    cpf,
-    name,
-    birth,
-    email,
-    user_id
-  });
-  return reply.status(201).send(result);
-}
-
-// src/controllers/person/routes.ts
-async function personRoutes(app) {
-  app.post("/person", create);
+  const { id } = registerParamsSchema.parse(req.params);
+  const findWithPersonUseCase = MakeFindWithPerson();
+  const result = await findWithPersonUseCase.handler(id);
+  return reply.send(result);
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  personRoutes
+  findUSer
 });

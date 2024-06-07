@@ -3,10 +3,6 @@ var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -17,22 +13,6 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/use-cases/create-user.ts
-var create_user_exports = {};
-__export(create_user_exports, {
-  CreateUserUseCase: () => CreateUserUseCase
-});
-module.exports = __toCommonJS(create_user_exports);
-var CreateUserUseCase = class {
-  constructor(userRepository) {
-    this.userRepository = userRepository;
-  }
-  async handler(user) {
-    const result = await this.userRepository.create(user);
-    return result;
-  }
-};
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
-  CreateUserUseCase
-});
+// src/repositories/user.repository.interface.ts
+var user_repository_interface_exports = {};
+module.exports = __toCommonJS(user_repository_interface_exports);

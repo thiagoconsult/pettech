@@ -75,12 +75,21 @@ var Database = class {
 };
 var database = new Database();
 
-// src/repositories/user.repository.ts
+// src/repositories/pg/user.repository.ts
 var UserRepository = class {
   async create({ username, password }) {
     const result = await database.clientInstance?.query(
       `INSERT INTO "user" (username, password) VALUES ($1, $2) RETURNING *`,
       [username, password]
+    );
+    return result?.rows[0];
+  }
+  async findWithPerson(userid) {
+    const result = await database.clientInstance?.query(
+      `SELECT * FROM "user"
+      LEFT JOIN person ON "user".id = person.user_id
+      WHERE "user".id = $1`,
+      [userid]
     );
     return result?.rows[0];
   }
@@ -92,9 +101,17 @@ var CreateUserUseCase = class {
     this.userRepository = userRepository;
   }
   async handler(user) {
-    return await this.userRepository.create(user);
+    const result = await this.userRepository.create(user);
+    return result;
   }
 };
+
+// src/use-cases/factory/make-create-user-use-case.ts
+function MakeCreateUserUseCase() {
+  const userRepository = new UserRepository();
+  const createUserUseCase = new CreateUserUseCase(userRepository);
+  return createUserUseCase;
+}
 
 // src/controllers/user/create.ts
 var import_zod2 = require("zod");
@@ -104,15 +121,9 @@ async function create(req, reply) {
     password: import_zod2.z.string()
   });
   const { username, password } = registerBodySchema.parse(req.body);
-  try {
-    const userRepository = new UserRepository();
-    const createUserUseCase = new CreateUserUseCase(userRepository);
-    const result = await createUserUseCase.handler({ username, password });
-    return reply.status(201).send(result);
-  } catch (error) {
-    console.error(`Error creating user: ${error}`);
-    throw new Error(`Error creating user: ${error}`);
-  }
+  const createUserUseCase = MakeCreateUserUseCase();
+  const result = await createUserUseCase.handler({ username, password });
+  return reply.status(201).send(result);
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
