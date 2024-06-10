@@ -3,11 +3,13 @@ import { personRoutes } from "./controllers/person/routes";
 import { userRoutes } from "./controllers/user/routes";
 
 import { globalErrorHandler } from "./utils/global-error-handler";
+import { addressRoutes } from "./controllers/address/routes";
 
 export const app = fastify();
 
 app.register(personRoutes);
 app.register(userRoutes);
+app.register(addressRoutes);
 
 app.setErrorHandler(globalErrorHandler);
 

@@ -1,10 +1,10 @@
-import { Person } from "@/entities/person.entity";
-import { User } from "@/entities/user.entity";
 import { database } from "@/lib/pg/db";
 import { IUserRepository } from "../user.repository.interface";
+import { IUser } from "@/entities/models/user.iterface";
+import { IPerson } from "@/entities/models/person.interface";
 
 export class UserRepository implements IUserRepository {
-  async create({ username, password }: User): Promise<User | undefined> {
+  async create({ username, password }: IUser): Promise<IUser | undefined> {
     const result = await database.clientInstance?.query(
       `INSERT INTO "user" (username, password) VALUES ($1, $2) RETURNING *`,
       [username, password]
@@ -14,7 +14,7 @@ export class UserRepository implements IUserRepository {
 
   public async findWithPerson(
     userid: number
-  ): Promise<(User & Person) | undefined> {
+  ): Promise<(IUser & IPerson) | undefined> {
     const result = await database.clientInstance?.query(
       `SELECT * FROM "user"
       LEFT JOIN person ON "user".id = person.user_id

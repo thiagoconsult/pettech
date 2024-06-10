@@ -1,24 +1,24 @@
-import { Address } from "@/entities/address.entity";
 import { IAddressRepository } from "../address.repository.interface";
 import { database } from "@/lib/pg/db";
 import { Person } from "@/entities/person.entity";
+import { IAddress } from "@/entities/models/address.interface";
 
 export class AddressRepository implements IAddressRepository {
   async findAddressByPersonId(
     personId: number,
     page: number,
     limit: number
-  ): Promise<(Address & Person)[]> {
+  ): Promise<(IAddress & Person)[]> {
     const offset = (page - 1) * limit;
     const query = `
     SELECT address.*, person.*
     FROM address
-    JOIN person ON address.user_id = person.id
+    JOIN person ON address.person_id = person.id
     WHERE person.id = $1
     LIMIT $2 OFFSET $3
     `;
 
-    const result = await database.clientInstance?.query<Address & Person>(
+    const result = await database.clientInstance?.query<IAddress & Person>(
       query,
       [personId, limit, offset]
     );
@@ -32,12 +32,13 @@ export class AddressRepository implements IAddressRepository {
     state,
     zip_code,
     person_id,
-  }: Address): Promise<Address | undefined> {
-    const address = await database.clientInstance?.query(
+  }: IAddress): Promise<IAddress | undefined> {
+    const result = await database.clientInstance?.query<IAddress>(
       `
-      INSERT INTO address (street, city, state, zip_code, person_id) valuer ($1, $2, $3, $4, $5) RETURNING *`,
+      INSERT INTO address (street, city, state, zip_code, person_id)
+      VALUES ($1, $2, $3, $4, $5) RETURNING *`,
       [street, city, state, zip_code, person_id]
     );
-    return address?.rows[0];
+    return result?.rows[0];
   }
 }
