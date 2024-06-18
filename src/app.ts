@@ -7,6 +7,7 @@ import { userRoutes } from "./controllers/user/routes";
 import { globalErrorHandler } from "./utils/global-error-handler";
 import { addressRoutes } from "./controllers/address/routes";
 import { productRoutes } from "./controllers/product/routes";
+import { categoryRoutes } from "./controllers/category/routes";
 
 export const app = fastify();
 
@@ -14,6 +15,7 @@ app.register(personRoutes);
 app.register(userRoutes);
 app.register(addressRoutes);
 app.register(productRoutes);
+app.register(categoryRoutes);
 
 app.setErrorHandler(globalErrorHandler);
 

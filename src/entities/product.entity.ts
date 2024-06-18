@@ -46,7 +46,7 @@ export class Product implements IProduct {
     cascade: true,
   })
   @JoinTable({
-    name: "produtc_category",
+    name: "product_category",
     joinColumn: {
       name: "product_id",
       referencedColumnName: "id",
