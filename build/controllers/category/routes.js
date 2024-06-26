@@ -25,12 +25,37 @@ var __decorateClass = (decorators, target, key, kind) => {
   return result;
 };
 
-// src/use-cases/factory/make-create-product.use-case.ts
-var make_create_product_use_case_exports = {};
-__export(make_create_product_use_case_exports, {
-  makeCreateProductUseCase: () => makeCreateProductUseCase
+// src/controllers/category/routes.ts
+var routes_exports = {};
+__export(routes_exports, {
+  categoryRoutes: () => categoryRoutes
 });
-module.exports = __toCommonJS(make_create_product_use_case_exports);
+module.exports = __toCommonJS(routes_exports);
+
+// src/lib/typeorm/typeorm.ts
+var import_typeorm3 = require("typeorm");
+
+// src/env/index.ts
+var import_config = require("dotenv/config");
+var import_zod = require("zod");
+var envSchema = import_zod.z.object({
+  NODE_ENV: import_zod.z.enum(["development", "production", "test"]).default("development"),
+  PORT: import_zod.z.coerce.number().default(3e3),
+  DATABASE_HOST: import_zod.z.string(),
+  DATABASE_USER: import_zod.z.string(),
+  DATABASE_PASSWORD: import_zod.z.string(),
+  DATABASE_NAME: import_zod.z.string(),
+  DATABASE_PORT: import_zod.z.coerce.number()
+});
+var _env = envSchema.safeParse(process.env);
+if (!_env.success) {
+  console.error("Invalid environment variables", _env.error.format());
+  throw new Error("Invalid environment variables");
+}
+var env = _env.data;
+
+// src/lib/typeorm/typeorm.ts
+var import_console = require("console");
 
 // src/entities/product.entity.ts
 var import_typeorm2 = require("typeorm");
@@ -126,31 +151,6 @@ Product = __decorateClass([
   })
 ], Product);
 
-// src/lib/typeorm/typeorm.ts
-var import_typeorm3 = require("typeorm");
-
-// src/env/index.ts
-var import_config = require("dotenv/config");
-var import_zod = require("zod");
-var envSchema = import_zod.z.object({
-  NODE_ENV: import_zod.z.enum(["development", "production", "test"]).default("development"),
-  PORT: import_zod.z.coerce.number().default(3e3),
-  DATABASE_HOST: import_zod.z.string(),
-  DATABASE_USER: import_zod.z.string(),
-  DATABASE_PASSWORD: import_zod.z.string(),
-  DATABASE_NAME: import_zod.z.string(),
-  DATABASE_PORT: import_zod.z.coerce.number()
-});
-var _env = envSchema.safeParse(process.env);
-if (!_env.success) {
-  console.error("Invalid environment variables", _env.error.format());
-  throw new Error("Invalid environment variables");
-}
-var env = _env.data;
-
-// src/lib/typeorm/typeorm.ts
-var import_console = require("console");
-
 // src/lib/typeorm/migrations/1719264459763-ProductAutoGenerateUUID.ts
 var ProductAutoGenerateUUID1719264459763 = class {
   async up(queryRunner) {
@@ -188,34 +188,50 @@ appDataSource.initialize().then(() => {
   console.error(`Error connecting to database with typeorm, ${import_console.error}`);
 });
 
-// src/repositories/typeorm/product.repository.ts
-var ProductRepository = class {
+// src/repositories/typeorm/category.repository.ts
+var CategoryRepository = class {
   repository;
   constructor() {
-    this.repository = appDataSource.getRepository(Product);
+    this.repository = appDataSource.getRepository(Category);
   }
-  async create(product) {
-    return this.repository.save(product);
-  }
-};
-
-// src/use-cases/create-produtc.ts
-var CreateProdutcUseCase = class {
-  constructor(productRepository) {
-    this.productRepository = productRepository;
-  }
-  async handler(product) {
-    return this.productRepository.create(product);
+  async create(name) {
+    await this.repository.save({ name });
   }
 };
 
-// src/use-cases/factory/make-create-product.use-case.ts
-function makeCreateProductUseCase() {
-  const productRepository = new ProductRepository();
-  const createProductUseCase = new CreateProdutcUseCase(productRepository);
-  return createProductUseCase;
+// src/use-cases/create-category.ts
+var CreateCategoryUseCase = class {
+  constructor(categoryRepository) {
+    this.categoryRepository = categoryRepository;
+  }
+  async handler(name) {
+    await this.categoryRepository.create(name);
+  }
+};
+
+// src/use-cases/factory/make-create-category-use-case.ts
+function makeCreateCategoryUseCase() {
+  const categoryRepository = new CategoryRepository();
+  const createCategoryUseCase = new CreateCategoryUseCase(categoryRepository);
+  return createCategoryUseCase;
+}
+
+// src/controllers/category/create.ts
+var import_zod2 = require("zod");
+async function create(request, reply) {
+  const registerBodySchema = import_zod2.z.object({
+    name: import_zod2.z.string()
+  });
+  const { name } = registerBodySchema.parse(request.body);
+  const createCategoryUseCase = makeCreateCategoryUseCase();
+  await createCategoryUseCase.handler(name);
+}
+
+// src/controllers/category/routes.ts
+async function categoryRoutes(app) {
+  app.post("/category", create);
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  makeCreateProductUseCase
+  categoryRoutes
 });

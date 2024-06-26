@@ -25,12 +25,39 @@ var __decorateClass = (decorators, target, key, kind) => {
   return result;
 };
 
-// src/entities/product.entity.ts
-var product_entity_exports = {};
-__export(product_entity_exports, {
-  Product: () => Product
+// src/repositories/typeorm/category.repository.ts
+var category_repository_exports = {};
+__export(category_repository_exports, {
+  CategoryRepository: () => CategoryRepository
 });
-module.exports = __toCommonJS(product_entity_exports);
+module.exports = __toCommonJS(category_repository_exports);
+
+// src/lib/typeorm/typeorm.ts
+var import_typeorm3 = require("typeorm");
+
+// src/env/index.ts
+var import_config = require("dotenv/config");
+var import_zod = require("zod");
+var envSchema = import_zod.z.object({
+  NODE_ENV: import_zod.z.enum(["development", "production", "test"]).default("development"),
+  PORT: import_zod.z.coerce.number().default(3e3),
+  DATABASE_HOST: import_zod.z.string(),
+  DATABASE_USER: import_zod.z.string(),
+  DATABASE_PASSWORD: import_zod.z.string(),
+  DATABASE_NAME: import_zod.z.string(),
+  DATABASE_PORT: import_zod.z.coerce.number()
+});
+var _env = envSchema.safeParse(process.env);
+if (!_env.success) {
+  console.error("Invalid environment variables", _env.error.format());
+  throw new Error("Invalid environment variables");
+}
+var env = _env.data;
+
+// src/lib/typeorm/typeorm.ts
+var import_console = require("console");
+
+// src/entities/product.entity.ts
 var import_typeorm2 = require("typeorm");
 
 // src/entities/category.entity.ts
@@ -123,7 +150,55 @@ Product = __decorateClass([
     name: "product"
   })
 ], Product);
+
+// src/lib/typeorm/migrations/1719264459763-ProductAutoGenerateUUID.ts
+var ProductAutoGenerateUUID1719264459763 = class {
+  async up(queryRunner) {
+    await queryRunner.query(`
+        CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+        `);
+    await queryRunner.query(`
+      ALTER TABLE product
+      ALTER COLUMN id SET DEFAULT uuid_generate_v4();
+      `);
+  }
+  async down(queryRunner) {
+    await queryRunner.query(`
+      ALTER TABLE product
+      ALTER COLUMN id DROP DEFAULT;
+      `);
+  }
+};
+
+// src/lib/typeorm/typeorm.ts
+var appDataSource = new import_typeorm3.DataSource({
+  type: "postgres",
+  host: env.DATABASE_HOST,
+  port: env.DATABASE_PORT,
+  username: env.DATABASE_USER,
+  password: env.DATABASE_PASSWORD,
+  database: env.DATABASE_NAME,
+  entities: [Product, Category],
+  migrations: [ProductAutoGenerateUUID1719264459763],
+  logging: env.NODE_ENV === "development"
+});
+appDataSource.initialize().then(() => {
+  console.log(`Database with typeorm started at port #${env.DATABASE_PORT}`);
+}).catch(() => {
+  console.error(`Error connecting to database with typeorm, ${import_console.error}`);
+});
+
+// src/repositories/typeorm/category.repository.ts
+var CategoryRepository = class {
+  repository;
+  constructor() {
+    this.repository = appDataSource.getRepository(Category);
+  }
+  async create(name) {
+    await this.repository.save({ name });
+  }
+};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  Product
+  CategoryRepository
 });

@@ -91,7 +91,7 @@ __decorateClass([
 ], Category.prototype, "name", 2);
 __decorateClass([
   (0, import_typeorm.Column)({
-    name: "created_at",
+    name: "creation_date",
     type: "time without time zone",
     default: () => "CURRENT_TIMESTAMP"
   })
@@ -145,7 +145,7 @@ __decorateClass([
     cascade: true
   }),
   (0, import_typeorm2.JoinTable)({
-    name: "produtc_category",
+    name: "product_category",
     joinColumn: {
       name: "product_id",
       referencedColumnName: "id"
@@ -162,8 +162,8 @@ Product = __decorateClass([
   })
 ], Product);
 
-// src/lib/typeorm/migrations/1718490002324-ProductAutoGenerateUUID.ts
-var ProductAutoGenerateUUID1718490002324 = class {
+// src/lib/typeorm/migrations/1719264459763-ProductAutoGenerateUUID.ts
+var ProductAutoGenerateUUID1719264459763 = class {
   async up(queryRunner) {
     await queryRunner.query(`
         CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -190,7 +190,7 @@ var appDataSource = new import_typeorm3.DataSource({
   password: env.DATABASE_PASSWORD,
   database: env.DATABASE_NAME,
   entities: [Product, Category],
-  migrations: [ProductAutoGenerateUUID1718490002324],
+  migrations: [ProductAutoGenerateUUID1719264459763],
   logging: env.NODE_ENV === "development"
 });
 appDataSource.initialize().then(() => {
@@ -589,12 +589,57 @@ async function productRoutes(app2) {
   app2.post("/product", create4);
 }
 
+// src/repositories/typeorm/category.repository.ts
+var CategoryRepository = class {
+  repository;
+  constructor() {
+    this.repository = appDataSource.getRepository(Category);
+  }
+  async create(name) {
+    await this.repository.save({ name });
+  }
+};
+
+// src/use-cases/create-category.ts
+var CreateCategoryUseCase = class {
+  constructor(categoryRepository) {
+    this.categoryRepository = categoryRepository;
+  }
+  async handler(name) {
+    await this.categoryRepository.create(name);
+  }
+};
+
+// src/use-cases/factory/make-create-category-use-case.ts
+function makeCreateCategoryUseCase() {
+  const categoryRepository = new CategoryRepository();
+  const createCategoryUseCase = new CreateCategoryUseCase(categoryRepository);
+  return createCategoryUseCase;
+}
+
+// src/controllers/category/create.ts
+var import_zod9 = require("zod");
+async function create5(request, reply) {
+  const registerBodySchema = import_zod9.z.object({
+    name: import_zod9.z.string()
+  });
+  const { name } = registerBodySchema.parse(request.body);
+  const createCategoryUseCase = makeCreateCategoryUseCase();
+  await createCategoryUseCase.handler(name);
+}
+
+// src/controllers/category/routes.ts
+async function categoryRoutes(app2) {
+  app2.post("/category", create5);
+}
+
 // src/app.ts
 var app = (0, import_fastify.default)();
 app.register(personRoutes);
 app.register(userRoutes);
 app.register(addressRoutes);
 app.register(productRoutes);
+app.register(categoryRoutes);
 app.setErrorHandler(globalErrorHandler);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {

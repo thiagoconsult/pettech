@@ -55,7 +55,7 @@ __decorateClass([
 ], Category.prototype, "name", 2);
 __decorateClass([
   (0, import_typeorm.Column)({
-    name: "created_at",
+    name: "creation_date",
     type: "time without time zone",
     default: () => "CURRENT_TIMESTAMP"
   })
@@ -109,7 +109,7 @@ __decorateClass([
     cascade: true
   }),
   (0, import_typeorm2.JoinTable)({
-    name: "produtc_category",
+    name: "product_category",
     joinColumn: {
       name: "product_id",
       referencedColumnName: "id"
@@ -151,8 +151,8 @@ var env = _env.data;
 // src/lib/typeorm/typeorm.ts
 var import_console = require("console");
 
-// src/lib/typeorm/migrations/1718490002324-ProductAutoGenerateUUID.ts
-var ProductAutoGenerateUUID1718490002324 = class {
+// src/lib/typeorm/migrations/1719264459763-ProductAutoGenerateUUID.ts
+var ProductAutoGenerateUUID1719264459763 = class {
   async up(queryRunner) {
     await queryRunner.query(`
         CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -179,7 +179,7 @@ var appDataSource = new import_typeorm3.DataSource({
   password: env.DATABASE_PASSWORD,
   database: env.DATABASE_NAME,
   entities: [Product, Category],
-  migrations: [ProductAutoGenerateUUID1718490002324],
+  migrations: [ProductAutoGenerateUUID1719264459763],
   logging: env.NODE_ENV === "development"
 });
 appDataSource.initialize().then(() => {

@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class ProductAutoGenerateUUID1718490002324
+export class ProductAutoGenerateUUID1719264459763
   implements MigrationInterface
 {
   public async up(queryRunner: QueryRunner): Promise<void> {
