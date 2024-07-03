@@ -41,11 +41,12 @@ var import_zod = require("zod");
 var envSchema = import_zod.z.object({
   NODE_ENV: import_zod.z.enum(["development", "production", "test"]).default("development"),
   PORT: import_zod.z.coerce.number().default(3e3),
-  DATABASE_HOST: import_zod.z.string(),
-  DATABASE_USER: import_zod.z.string(),
-  DATABASE_PASSWORD: import_zod.z.string(),
-  DATABASE_NAME: import_zod.z.string(),
-  DATABASE_PORT: import_zod.z.coerce.number()
+  POSTGRES_HOST: import_zod.z.string(),
+  POSTGRES_USER: import_zod.z.string(),
+  POSTGRES_PASSWORD: import_zod.z.string(),
+  POSTGRES_DB: import_zod.z.string(),
+  POSTGRES_PORT: import_zod.z.coerce.number(),
+  JWT_SECRET: import_zod.z.string()
 });
 var _env = envSchema.safeParse(process.env);
 if (!_env.success) {
@@ -173,17 +174,17 @@ var ProductAutoGenerateUUID1719264459763 = class {
 // src/lib/typeorm/typeorm.ts
 var appDataSource = new import_typeorm3.DataSource({
   type: "postgres",
-  host: env.DATABASE_HOST,
-  port: env.DATABASE_PORT,
-  username: env.DATABASE_USER,
-  password: env.DATABASE_PASSWORD,
-  database: env.DATABASE_NAME,
+  host: env.POSTGRES_HOST,
+  port: env.POSTGRES_PORT,
+  username: env.POSTGRES_USER,
+  password: env.POSTGRES_PASSWORD,
+  database: env.POSTGRES_DB,
   entities: [Product, Category],
   migrations: [ProductAutoGenerateUUID1719264459763],
   logging: env.NODE_ENV === "development"
 });
 appDataSource.initialize().then(() => {
-  console.log(`Database with typeorm started at port #${env.DATABASE_PORT}`);
+  console.log(`Database with typeorm started at port #${env.POSTGRES_PORT}`);
 }).catch(() => {
   console.error(`Error connecting to database with typeorm, ${import_console.error}`);
 });

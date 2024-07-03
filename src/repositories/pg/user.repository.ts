@@ -4,6 +4,17 @@ import { IUser } from "@/entities/models/user.iterface";
 import { IPerson } from "@/entities/models/person.interface";
 
 export class UserRepository implements IUserRepository {
+  async findByUsername(username: string): Promise<IUser | undefined> {
+    const result = await database.clientInstance?.query(
+      `
+      SELECT * FROM "user" WHERE "user".username = $1
+      `,
+      [username]
+    );
+
+    return result?.rows[0];
+  }
+
   async create({ username, password }: IUser): Promise<IUser | undefined> {
     const result = await database.clientInstance?.query(
       `INSERT INTO "user" (username, password) VALUES ($1, $2) RETURNING *`,

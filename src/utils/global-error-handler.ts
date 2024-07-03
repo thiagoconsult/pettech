@@ -2,6 +2,7 @@ import { ResourseNotFoundError } from "@/use-cases/errors/resource-not-found-err
 import { FastifyReply, FastifyRequest } from "fastify";
 import { env } from "@/env";
 import { ZodError } from "zod";
+import { InvalidCredentialsError } from "@/use-cases/errors/invalid-credentials-error";
 
 interface ErrorHandlerMap {
   [key: string]: (
@@ -20,6 +21,9 @@ export const errorHandlerMap: ErrorHandlerMap = {
   },
   ResourseNotFoundError: (error, _, reply) => {
     reply.status(404).send({ mesage: error.message });
+  },
+  InvalidCredentialsError: (error, _, reply) => {
+    reply.status(404).send({ message: error.message });
   },
 };
 

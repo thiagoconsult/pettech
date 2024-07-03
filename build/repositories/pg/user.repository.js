@@ -33,11 +33,12 @@ var import_zod = require("zod");
 var envSchema = import_zod.z.object({
   NODE_ENV: import_zod.z.enum(["development", "production", "test"]).default("development"),
   PORT: import_zod.z.coerce.number().default(3e3),
-  DATABASE_HOST: import_zod.z.string(),
-  DATABASE_USER: import_zod.z.string(),
-  DATABASE_PASSWORD: import_zod.z.string(),
-  DATABASE_NAME: import_zod.z.string(),
-  DATABASE_PORT: import_zod.z.coerce.number()
+  POSTGRES_HOST: import_zod.z.string(),
+  POSTGRES_USER: import_zod.z.string(),
+  POSTGRES_PASSWORD: import_zod.z.string(),
+  POSTGRES_DB: import_zod.z.string(),
+  POSTGRES_PORT: import_zod.z.coerce.number(),
+  JWT_SECRET: import_zod.z.string()
 });
 var _env = envSchema.safeParse(process.env);
 if (!_env.success) {
@@ -48,11 +49,11 @@ var env = _env.data;
 
 // src/lib/pg/db.ts
 var CONFIG = {
-  host: env.DATABASE_HOST,
-  user: env.DATABASE_USER,
-  password: env.DATABASE_PASSWORD,
-  database: env.DATABASE_NAME,
-  port: env.DATABASE_PORT
+  host: env.POSTGRES_HOST,
+  user: env.POSTGRES_USER,
+  password: env.POSTGRES_PASSWORD,
+  database: env.POSTGRES_DB,
+  port: env.POSTGRES_PORT
 };
 var Database = class {
   pool;
@@ -77,6 +78,15 @@ var database = new Database();
 
 // src/repositories/pg/user.repository.ts
 var UserRepository = class {
+  async findByUsername(username) {
+    const result = await database.clientInstance?.query(
+      `
+      SELECT * FROM "user" WHERE "user".username = $1
+      `,
+      [username]
+    );
+    return result?.rows[0];
+  }
   async create({ username, password }) {
     const result = await database.clientInstance?.query(
       `INSERT INTO "user" (username, password) VALUES ($1, $2) RETURNING *`,

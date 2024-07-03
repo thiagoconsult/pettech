@@ -31,11 +31,12 @@ var import_zod = require("zod");
 var envSchema = import_zod.z.object({
   NODE_ENV: import_zod.z.enum(["development", "production", "test"]).default("development"),
   PORT: import_zod.z.coerce.number().default(3e3),
-  DATABASE_HOST: import_zod.z.string(),
-  DATABASE_USER: import_zod.z.string(),
-  DATABASE_PASSWORD: import_zod.z.string(),
-  DATABASE_NAME: import_zod.z.string(),
-  DATABASE_PORT: import_zod.z.coerce.number()
+  POSTGRES_HOST: import_zod.z.string(),
+  POSTGRES_USER: import_zod.z.string(),
+  POSTGRES_PASSWORD: import_zod.z.string(),
+  POSTGRES_DB: import_zod.z.string(),
+  POSTGRES_PORT: import_zod.z.coerce.number(),
+  JWT_SECRET: import_zod.z.string()
 });
 var _env = envSchema.safeParse(process.env);
 if (!_env.success) {
@@ -55,6 +56,9 @@ var errorHandlerMap = {
   },
   ResourseNotFoundError: (error, _, reply) => {
     reply.status(404).send({ mesage: error.message });
+  },
+  InvalidCredentialsError: (error, _, reply) => {
+    reply.status(404).send({ message: error.message });
   }
 };
 function globalErrorHandler(error, _, reply) {
