@@ -12,7 +12,7 @@ import fastifyJwt from "@fastify/jwt";
 import { env } from "./env";
 import { jwtValidate } from "./http/middlewares/jwt-validate";
 
-export const app = fastify();
+export const app = fastify({ logger: true });
 
 app.register(fastifyJwt, {
   secret: env.JWT_SECRET,
